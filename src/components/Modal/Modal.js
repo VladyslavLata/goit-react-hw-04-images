@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { createPortal } from 'react-dom';
 import { Backdrop, ModalBox } from './Modal.styled';
 
@@ -28,4 +29,8 @@ export const Modal = ({ onClose, children }) => {
     </Backdrop>,
     modalEl
   );
+};
+
+Modal.propTypes = {
+  onClose: PropTypes.func.isRequired,
 };

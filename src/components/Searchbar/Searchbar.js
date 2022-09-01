@@ -1,5 +1,6 @@
 import { Formik } from 'formik';
 import * as yup from 'yup';
+import PropTypes from 'prop-types';
 import {
   SearcPanel,
   SearchForm,
@@ -43,4 +44,8 @@ export const Searchbar = ({ onSubmit }) => {
       </Formik>
     </SearcPanel>
   );
+};
+
+Searchbar.propTypes = {
+  onSubmit: PropTypes.func.isRequired,
 };
