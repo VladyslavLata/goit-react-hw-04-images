@@ -19,22 +19,23 @@ export const App = () => {
     if (searchQuery === '') {
       return;
     }
+
+    const getImages = async (searchQuery, page) => {
+      setStatus('pending');
+      try {
+        const responseDataImages = await searchImages(searchQuery, page);
+        setImages(state => [...state, ...responseDataImages.hits]);
+        setTotalImages(responseDataImages.totalHits);
+        setStatus('resolved');
+      } catch (error) {
+        setError(error);
+        setStatus('rejected');
+        console.error(error.message);
+      }
+    };
+
     getImages(searchQuery, page);
   }, [page, searchQuery]);
-
-  const getImages = async (searchQuery, page) => {
-    setStatus('pending');
-    try {
-      const responseDataImages = await searchImages(searchQuery, page);
-      setImages(state => [...state, ...responseDataImages.hits]);
-      setTotalImages(responseDataImages.totalHits);
-      setStatus('resolved');
-    } catch (error) {
-      setError(error);
-      setStatus('rejected');
-      console.error(error.message);
-    }
-  };
 
   const getSearchQuery = query => {
     if (query === searchQuery) {
