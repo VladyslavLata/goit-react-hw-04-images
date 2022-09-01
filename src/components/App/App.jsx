@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { ThreeDots } from 'react-loader-spinner';
 import { Searchbar } from '../Searchbar/Searchbar';
 import { searchImages } from 'Api/Api';
@@ -7,72 +7,71 @@ import { Button } from '../Button/Button';
 import { Message } from '../Message/Message';
 import { ApplicationBox } from './App.styled';
 
-export class App extends Component {
-  state = {
-    totalImages: 0,
-    images: [],
-    searchQuery: '',
-    page: 1,
-    status: 'idle',
-    error: '',
-  };
+export const App = () => {
+  const [totalImages, setTotalImages] = useState(0);
+  const [images, setImages] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState('1');
+  const [status, setStatus] = useState('idle');
+  const [error, setError] = useState(null);
 
-  async componentDidUpdate(prevProps, prevState) {
-    const { searchQuery, page } = this.state;
-    if (searchQuery !== prevState.searchQuery || page !== prevState.page) {
-      try {
-        this.setState({ status: 'pending' });
-        const responseDataImages = await searchImages(searchQuery, page);
-        this.setState(state => ({
-          images: [...state.images, ...responseDataImages.hits],
-          totalImages: responseDataImages.totalHits,
-          status: 'resolved',
-        }));
-      } catch (error) {
-        this.setState({ status: 'rejected', error: error });
-        console.error(error.message);
-      }
-    }
-  }
-
-  getSearchQuery = searchQuery => {
-    if (searchQuery === this.state.searchQuery) {
+  useEffect(() => {
+    if (searchQuery === '') {
       return;
     }
-    this.setState({ searchQuery, page: 1, images: [] });
+    getImages(searchQuery, page);
+  }, [page, searchQuery]);
+
+  const getImages = async (searchQuery, page) => {
+    setStatus('pending');
+    try {
+      const responseDataImages = await searchImages(searchQuery, page);
+      setImages(state => [...state, ...responseDataImages.hits]);
+      setTotalImages(responseDataImages.totalHits);
+      setStatus('resolved');
+    } catch (error) {
+      setError(error);
+      setStatus('rejected');
+      console.error(error.message);
+    }
   };
 
-  loadMoreImages = () => {
-    this.setState(({ page }) => ({ page: page + 1 }));
+  const getSearchQuery = query => {
+    if (query === searchQuery) {
+      return;
+    }
+    setSearchQuery(query);
+    setPage(1);
+    setImages([]);
   };
 
-  render() {
-    const { images, status, totalImages, page, error, searchQuery } =
-      this.state;
-    const totalPages = Math.ceil(totalImages / 12);
-    return (
-      <ApplicationBox>
-        <Searchbar onSubmit={this.getSearchQuery} />
-        {status !== 'idle' && totalImages > 0 && (
-          <ImageGallery imagesData={images} />
-        )}
-        {status === 'rejected' && <Message>{error.message}</Message>}
-        {status === 'resolved' && totalImages === 0 && (
-          <Message>
-            Your search "{searchQuery}" did not match any listings. Change the
-            request field and try again.
-          </Message>
-        )}
-        {status === 'resolved' && totalPages > page && (
-          <Button loadMore={this.loadMoreImages}>Load more</Button>
-        )}
-        {status === 'pending' && (
-          <ThreeDots
-            color="#3f51b5"
-            wrapperStyle={{ justifyContent: 'center' }}
-          />
-        )}
-      </ApplicationBox>
-    );
-  }
-}
+  const loadMoreImages = () => {
+    setPage(page => page + 1);
+  };
+
+  const totalPages = Math.ceil(totalImages / 12);
+  return (
+    <ApplicationBox>
+      <Searchbar onSubmit={getSearchQuery} />
+      {status !== 'idle' && totalImages > 0 && (
+        <ImageGallery imagesData={images} />
+      )}
+      {status === 'rejected' && <Message>{error.message}</Message>}
+      {status === 'resolved' && totalImages === 0 && (
+        <Message>
+          Your search "{searchQuery}" did not match any listings. Change the
+          request field and try again.
+        </Message>
+      )}
+      {status === 'resolved' && totalPages > page && (
+        <Button loadMore={loadMoreImages}>Load more</Button>
+      )}
+      {status === 'pending' && (
+        <ThreeDots
+          color="#3f51b5"
+          wrapperStyle={{ justifyContent: 'center' }}
+        />
+      )}
+    </ApplicationBox>
+  );
+};
